@@ -80,6 +80,20 @@
   const $ = id => document.getElementById(id);
   const response = $('response'), state = $('state'), mic = $('mic'), orb = $('orb'), status = $('status');
   let recognition = null, listening = false;
+  const AI_ENDPOINT = "https://YOUR-WORKER-NAME.YOUR-SUBDOMAIN.workers.dev";
+  let previousInteractionId = localStorage.getItem("jarvis_previous_interaction") || "";
+  async function askAI(question) {
+    if (AI_ENDPOINT.includes("YOUR-WORKER-NAME")) { say("My AI brain is prepared, but the secure server still needs to be connected. Please complete the Gemini and Cloudflare setup.", false); return; }
+    state.textContent = "CONSULTING GEMINI AI"; status.textContent = "● AI PROCESSING";
+    try {
+      const res = await fetch(AI_ENDPOINT, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ message: question, previous_interaction_id: previousInteractionId }) });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "AI request failed");
+      if (data.interaction_id) { previousInteractionId = data.interaction_id; localStorage.setItem("jarvis_previous_interaction", previousInteractionId); }
+      say(data.answer || "I did not receive a response.");
+    } catch (err) { say("AI connection issue: " + err.message, false); }
+    finally { state.textContent = "AWAITING YOUR COMMAND"; status.textContent = "● SYSTEM READY"; }
+  }
   const speak = text => {
     if (!('speechSynthesis' in window)) return;
     window.speechSynthesis.cancel();
@@ -103,7 +117,7 @@
     else if (s.includes('how are you')) say('All systems nominal. Thank you for asking. How may I assist you?');
     else if (s.includes('stop speaking') || s === 'stop') { window.speechSynthesis?.cancel(); say('Speech stopped.', false); }
     else if (s.includes('help') || s.includes('what can you do')) say('I can tell you the time and date, open YouTube, Google or Maps, and search the web. This first version uses simple built-in commands.');
-    else say('I heard: '+q+'. My first version is running in local command mode. Try asking for the time, date, or say open YouTube.');
+    else askAI(q);
   }
   function stopListening() {
     listening=false; orb.classList.remove('listening'); mic.textContent='🎙 START LISTENING';
