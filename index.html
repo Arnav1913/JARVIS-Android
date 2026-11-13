@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#06131d">
+  <meta name="description" content="J.A.R.V.I.S. personal assistant">
+  <link rel="manifest" href="manifest.webmanifest">
+  <title>J.A.R.V.I.S. — Personal AI</title>
+  <style>
+    :root { color-scheme: dark; --cyan:#55dcff; --blue:#159dc9; --muted:#83b9ca; --panel:#0a2230; }
+    * { box-sizing:border-box }
+    body { margin:0; min-height:100vh; background:radial-gradient(ellipse at 50% 25%,#10364b 0,#071925 42%,#030b12 100%); color:#e6faff; font:15px system-ui,-apple-system,Segoe UI,sans-serif; }
+    .shell { width:min(720px,100%); margin:auto; padding:22px 16px 38px; }
+    header { display:flex; align-items:center; justify-content:space-between; gap:12px; border-bottom:1px solid #16445a; padding-bottom:16px; }
+    .brand { display:flex; align-items:center; gap:12px; }
+    .logo { width:44px;height:44px;border:1px solid var(--cyan);border-radius:50%;display:grid;place-items:center;color:var(--cyan);font-weight:800;box-shadow:0 0 22px #1abde955,inset 0 0 14px #1abde933; }
+    h1 { margin:0; font-size:22px; letter-spacing:.16em; color:var(--cyan); }
+    .sub { color:var(--muted); font-size:10px; letter-spacing:.12em; margin-top:3px; }
+    .status { font-size:11px;color:#8fffd0;border:1px solid #1d795f;border-radius:99px;padding:7px 10px;white-space:nowrap; }
+    .core { display:grid;place-items:center;padding:25px 0 12px; }
+    .orb { width:210px;height:210px;border-radius:50%;display:grid;place-items:center;position:relative;background:radial-gradient(circle,#1a6a87 0,#0a3146 35%,#061723 65%);border:1px solid #40d7ff;box-shadow:0 0 28px #1ac9ff55,inset 0 0 35px #19bde955; }
+    .orb:before,.orb:after { content:"";position:absolute;inset:9px;border:1px dashed #48dfff99;border-radius:50%;animation:spin 18s linear infinite; }
+    .orb:after { inset:24px;border:2px solid transparent;border-top-color:#6beaff;border-bottom-color:#1aa4d5;animation-direction:reverse;animation-duration:9s; }
+    .orb.listening { box-shadow:0 0 45px #39e7ffbb,inset 0 0 48px #39e7ff99;animation:pulse 1s infinite alternate; }
+    .coretext { text-align:center;z-index:1; }
+    .coretext strong { display:block;color:#b8f5ff;font-size:22px;letter-spacing:.15em; }
+    .coretext span { font-size:10px;color:#8ac9db;letter-spacing:.2em; }
+    @keyframes spin { to{transform:rotate(360deg)} } @keyframes pulse { to{filter:brightness(1.5)} }
+    .state { color:var(--cyan);font-size:12px;letter-spacing:.16em;text-align:center;min-height:20px; }
+    .panel { background:linear-gradient(145deg,#0c2938dd,#061723ee);border:1px solid #17475d;border-radius:17px;padding:16px;margin-top:16px;box-shadow:0 10px 30px #0005; }
+    .label { color:#75cde3;font-size:11px;letter-spacing:.15em;margin-bottom:10px; }
+    .response { min-height:58px;line-height:1.5;color:#e0faff; }
+    .controls { display:flex;gap:10px;margin-top:13px; }
+    button { border:1px solid #287c98;background:#0b3448;color:#dffaff;border-radius:12px;padding:13px 15px;font-weight:650;cursor:pointer; }
+    button:active { transform:scale(.98) }
+    button.primary { background:linear-gradient(135deg,#087da5,#12506f);border-color:#54dfff;box-shadow:0 0 18px #12bde933;flex:1; }
+    button:disabled { opacity:.45;cursor:not-allowed }
+    input { width:100%;min-width:0;background:#04141e;border:1px solid #20536a;color:#eaffff;border-radius:11px;padding:14px;font:inherit;outline:none; }
+    .sendrow { display:flex;gap:8px;margin-top:10px; }
+    .sendrow button { padding-inline:18px; }
+    .quick { display:grid;grid-template-columns:repeat(2,1fr);gap:9px; }
+    .quick button { text-align:left;font-size:13px;background:#092332; }
+    .foot { text-align:center;color:#477f91;font-size:10px;letter-spacing:.1em;margin-top:22px; }
+    .hint { color:#85b7c6;font-size:12px;line-height:1.5;margin-top:10px; }
+    @media(min-width:560px){.quick{grid-template-columns:repeat(4,1fr)}}
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header>
+      <div class="brand"><div class="logo">J</div><div><h1>J.A.R.V.I.S.</h1><div class="sub">PERSONAL ASSISTANT · ANDROID V1</div></div></div>
+      <div class="status" id="status">● SYSTEM READY</div>
+    </header>
+    <section class="core">
+      <div class="orb" id="orb"><div class="coretext"><strong>J.A.R.V.I.S.</strong><span>NEURAL CORE</span></div></div>
+      <div class="state" id="state">AWAITING YOUR COMMAND</div>
+    </section>
+    <section class="panel">
+      <div class="label">ASSISTANT RESPONSE</div>
+      <div class="response" id="response" aria-live="polite">Good evening. J.A.R.V.I.S. is online. Tap the microphone and give me a command.</div>
+      <div class="controls"><button class="primary" id="mic">🎙 START LISTENING</button><button id="stop" title="Stop speaking">■</button></div>
+      <div class="hint" id="micHint">Microphone access is requested when you first start listening. Speech recognition requires a supported browser and an HTTPS connection.</div>
+    </section>
+    <section class="panel">
+      <div class="label">TYPE A COMMAND</div>
+      <div class="sendrow"><input id="command" placeholder="e.g. What time is it?" autocomplete="off"><button id="send">SEND</button></div>
+    </section>
+    <section class="panel">
+      <div class="label">QUICK COMMANDS</div>
+      <div class="quick">
+        <button data-cmd="What time is it?">◷ Current time</button><button data-cmd="What's today's date?">▦ Today's date</button>
+        <button data-cmd="Open YouTube">▶ Open YouTube</button><button data-cmd="Search for space news">⌕ Search the web</button>
+      </div>
+    </section>
+    <div class="foot">STARK-INSPIRED INTERFACE · LOCAL COMMAND MODE</div>
+  </main>
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const response = $('response'), state = $('state'), mic = $('mic'), orb = $('orb'), status = $('status');
+  let recognition = null, listening = false;
+  const speak = text => {
+    if (!('speechSynthesis' in window)) return;
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.rate = 1.02; utterance.pitch = 0.88; utterance.volume = 1;
+    window.speechSynthesis.speak(utterance);
+  };
+  const say = (text, shouldSpeak=true) => { response.textContent = text; if (shouldSpeak) speak(text); };
+  const openSearch = q => window.open('https://www.google.com/search?q='+encodeURIComponent(q), '_blank', 'noopener');
+  function runCommand(raw) {
+    const q = raw.trim(), s = q.toLowerCase();
+    if (!q) return;
+    $('command').value = '';
+    if (/\b(hello|hi|hey jarvis|good morning|good evening)\b/.test(s)) say('Hello. J.A.R.V.I.S. is at your service. What would you like me to do?');
+    else if (s.includes('time')) say('The current time is '+new Intl.DateTimeFormat(undefined,{hour:'numeric',minute:'2-digit'}).format(new Date())+'.');
+    else if (s.includes('date') || s.includes('day is it')) say('Today is '+new Intl.DateTimeFormat(undefined,{weekday:'long',year:'numeric',month:'long',day:'numeric'}).format(new Date())+'.');
+    else if (s.includes('open youtube')) { say('Opening YouTube.'); window.open('https://m.youtube.com/', '_blank', 'noopener'); }
+    else if (s.includes('open google')) { say('Opening Google.'); window.open('https://www.google.com/', '_blank', 'noopener'); }
+    else if (s.includes('open maps') || s.includes('open google maps')) { say('Opening Google Maps.'); window.open('https://maps.google.com/', '_blank', 'noopener'); }
+    else if (s.startsWith('search for ') || s.startsWith('search ')) { const term=q.replace(/^search for\s+/i,'').replace(/^search\s+/i,''); say('Searching the web for '+term+'.'); openSearch(term); }
+    else if (s.includes('how are you')) say('All systems nominal. Thank you for asking. How may I assist you?');
+    else if (s.includes('stop speaking') || s === 'stop') { window.speechSynthesis?.cancel(); say('Speech stopped.', false); }
+    else if (s.includes('help') || s.includes('what can you do')) say('I can tell you the time and date, open YouTube, Google or Maps, and search the web. This first version uses simple built-in commands.');
+    else say('I heard: '+q+'. My first version is running in local command mode. Try asking for the time, date, or say open YouTube.');
+  }
+  function stopListening() {
+    listening=false; orb.classList.remove('listening'); mic.textContent='🎙 START LISTENING';
+    state.textContent='AWAITING YOUR COMMAND'; status.textContent='● SYSTEM READY';
+    try { recognition && recognition.stop(); } catch(e) {}
+  }
+  const SpeechRecognition=window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (SpeechRecognition) {
+    recognition=new SpeechRecognition(); recognition.lang=navigator.language || 'en-IN';
+    recognition.interimResults=false; recognition.maxAlternatives=1;
+    recognition.onstart=()=>{ listening=true; orb.classList.add('listening'); mic.textContent='● LISTENING… TAP TO STOP'; state.textContent='LISTENING FOR COMMAND'; status.textContent='● AUDIO INPUT ACTIVE'; };
+    recognition.onresult=event=>runCommand(event.results[0][0].transcript);
+    recognition.onerror=event=>{ say('Microphone issue: '+event.error+'. You can still type a command below.',false); stopListening(); };
+    recognition.onend=()=>{ if(listening) stopListening(); };
+  } else { $('micHint').textContent='Speech recognition is not available in this browser. Try Chrome on Android, or use the text command box.'; mic.disabled=true; }
+  mic.addEventListener('click',()=>{ if(!recognition)return; if(listening)stopListening(); else { try{recognition.start();}catch(e){say('Please wait a moment, then try the microphone again.',false);} } });
+  $('stop').addEventListener('click',()=>{ window.speechSynthesis?.cancel(); stopListening(); });
+  $('send').addEventListener('click',()=>runCommand($('command').value));
+  $('command').addEventListener('keydown',e=>{if(e.key==='Enter')runCommand($('command').value);});
+  document.querySelectorAll('[data-cmd]').forEach(b=>b.addEventListener('click',()=>runCommand(b.dataset.cmd)));
+  if('serviceWorker' in navigator && location.protocol.startsWith('http')) window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+})();
+</script>
+</body>
+</html>
