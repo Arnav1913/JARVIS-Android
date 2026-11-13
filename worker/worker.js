@@ -33,7 +33,7 @@ export default {
         store: true,
         generation_config: { max_output_tokens: 700, temperature: 0.7 }
       };
-      if (/^v1_/.test(previousId) || /^int_/.test(previousId)) payload.previous_interaction_id = previousId;
+      if (previousId) payload.previous_interaction_id = previousId;
       const upstream = await fetch("https://generativelanguage.googleapis.com/v1beta/interactions", {
         method: "POST",
         headers: { "Content-Type": "application/json", "x-goog-api-key": env.GEMINI_API_KEY },
